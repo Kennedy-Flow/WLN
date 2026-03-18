@@ -1,0 +1,1859 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WLN Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Outfit:wght@200;300;400;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07070d;
+      --bg2: #0d0d18;
+      --pink: #ff6b9d;
+      --pink-light: #ffb8d8;
+      --pink-dim: #ff6b9d28;
+      --pink-glow: #ff6b9d55;
+      --text: #ede0eb;
+      --muted: #91688e;
+      --border: #1e1228;
+      --card: #0e0917;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      overflow-x: hidden;
+    }
+
+    ::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--pink-dim);
+    }
+
+    canvas#petals {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    #loader {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 1.2s ease, visibility 1.2s ease;
+    }
+
+    #loader.fade-out {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .lc {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(18px, 4vw, 34px);
+    }
+
+    .torii {
+      width: clamp(80px, 18vw, 130px);
+      image-rendering: pixelated;
+      animation: tpulse 2.5s ease-in-out infinite;
+    }
+
+    @keyframes tpulse {
+
+      0%,
+      100% {
+        filter: drop-shadow(0 0 10px #ff6b9d77);
+      }
+
+      50% {
+        filter: drop-shadow(0 0 26px #ff6b9dbb);
+      }
+    }
+
+    .l-name {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(11px, 2.8vw, 20px);
+      color: var(--pink-light);
+      letter-spacing: 0.14em;
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+
+    .l-sub {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(5px, 1.2vw, 8px);
+      color: var(--muted);
+      letter-spacing: 0.22em;
+      margin-top: 10px;
+    }
+
+    @keyframes glow {
+      from {
+        text-shadow: 0 0 6px #ff6b9d44;
+      }
+
+      to {
+        text-shadow: 0 0 22px #ff6b9daa;
+      }
+    }
+
+    .bar-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      width: clamp(150px, 48vw, 260px);
+    }
+
+    .bar-lbl {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 6px;
+      color: #4a2a4a;
+      letter-spacing: .15em;
+    }
+
+    .bar-track {
+      width: 100%;
+      height: 10px;
+      background: #120812;
+      border: 2px solid #3a0028;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ff6b9d, #ffaacc, #ff6b9d);
+      background-size: 200% 100%;
+      animation: bshim 1.2s linear infinite;
+      transition: width .1s linear;
+      position: relative;
+    }
+
+    .bar-fill::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 5px;
+      height: 100%;
+      background: #fff8fc;
+      opacity: .65;
+    }
+
+    @keyframes bshim {
+      0% {
+        background-position: 200% 0
+      }
+
+      100% {
+        background-position: -200% 0
+      }
+    }
+
+    .bar-pct {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      color: var(--pink-light);
+    }
+
+    .dots {
+      display: flex;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      background: #3a0028;
+      animation: db 1.2s ease-in-out infinite;
+    }
+
+    .dot:nth-child(2) {
+      animation-delay: .2s
+    }
+
+    .dot:nth-child(3) {
+      animation-delay: .4s
+    }
+
+    @keyframes db {
+
+      0%,
+      80%,
+      100% {
+        background: #3a0028
+      }
+
+      40% {
+        background: var(--pink-light);
+        box-shadow: 0 0 6px var(--pink)
+      }
+    }
+
+    #bg-video-wrap {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    #bg-video {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      min-width: 100%;
+      min-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: cover;
+    }
+
+    #bg-video-wrap::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 30%, #07070d 100%), linear-gradient(to bottom, #07070dee 0%, #07070d88 35%, #07070d88 65%, #07070dee 100%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    #site {
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 1.2s ease, visibility 1.2s ease;
+    }
+
+    #site.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px clamp(24px, 7vw, 100px);
+      background: linear-gradient(to bottom, #07070dcc, transparent);
+      backdrop-filter: blur(8px);
+    }
+
+    .nav-logo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(8px, 1.4vw, 12px);
+      color: var(--pink-light);
+      text-decoration: none;
+      letter-spacing: 0.12em;
+      text-shadow: 0 0 12px var(--pink-glow);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: clamp(20px, 3.5vw, 48px);
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: clamp(11px, 1.2vw, 13px);
+      font-weight: 300;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.1em;
+      transition: color .3s;
+    }
+
+    .nav-links a:hover {
+      color: var(--pink-light);
+    }
+
+    #mobileNav {
+      display: none;
+      visibility: hidden;
+    }
+
+    @media(max-width:600px) {
+      nav {
+        display: none;
+      }
+
+      #mobileNav {
+        display: flex !important;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-around;
+        position: fixed;
+        bottom: 0;
+        top: auto;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: 68px;
+        background: #090711;
+        border-top: 1px solid #1a0f26;
+        z-index: 99999;
+        padding: 0 8px;
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+
+      #mobileNav::before {
+        content: '';
+        position: absolute;
+        top: -1px;
+        left: 15%;
+        right: 15%;
+        height: 1px;
+        background: linear-gradient(to right, transparent, var(--pink), transparent);
+      }
+
+      #mobileNav button {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        background: none;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        color: #3a2842;
+        transition: color .25s;
+        height: 100%;
+        position: relative;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      #mobileNav button.active {
+        color: var(--pink-light);
+      }
+
+      #mobileNav button.active::after {
+        content: '';
+        position: absolute;
+        top: 8px;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: var(--pink);
+        box-shadow: 0 0 8px var(--pink);
+      }
+
+      #mobileNav button svg {
+        width: 22px;
+        height: 22px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.6;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      #mobileNav button.active svg {
+        filter: drop-shadow(0 0 5px var(--pink));
+      }
+
+      .mnav-label {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 5px;
+        letter-spacing: 0.06em;
+        white-space: nowrap;
+        display: block;
+        color: inherit;
+      }
+
+      #site {
+        padding-bottom: 68px;
+      }
+    }
+
+    #hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px clamp(24px, 8vw, 140px) 120px;
+      position: relative;
+    }
+
+    .hero-eyebrow {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(6px, 1vw, 9px);
+      color: var(--pink);
+      letter-spacing: 0.35em;
+      margin-bottom: 28px;
+      opacity: 0;
+      animation: up .9s ease forwards .4s;
+    }
+
+    .hero-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(42px, 9vw, 110px);
+      font-weight: 700;
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+      margin-bottom: 24px;
+      opacity: 0;
+      animation: up .9s ease forwards .6s;
+    }
+
+    .hero-title em {
+      font-style: normal;
+      color: var(--pink);
+      text-shadow: 0 0 60px var(--pink-glow);
+    }
+
+    .hero-desc {
+      font-size: clamp(13px, 1.8vw, 17px);
+      font-weight: 200;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      max-width: 480px;
+      line-height: 1.9;
+      margin-bottom: 52px;
+      opacity: 1;
+      animation: up .9s ease forwards .8s;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      justify-content: center;
+      opacity: 0;
+      animation: up .9s ease forwards 1s;
+    }
+
+    .btn-p {
+      padding: 13px 36px;
+      background: var(--pink);
+      color: #07070d;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: box-shadow .3s, transform .25s;
+    }
+
+    .btn-p:hover {
+      box-shadow: 0 0 32px var(--pink-glow);
+      transform: translateY(-3px);
+    }
+
+    .btn-o {
+      padding: 13px 36px;
+      background: transparent;
+      color: var(--pink-light);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 400;
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      border: 1px solid var(--pink-dim);
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color .3s, color .3s, transform .25s;
+    }
+
+    .btn-o:hover {
+      border-color: var(--pink);
+      color: var(--pink);
+      transform: translateY(-3px);
+    }
+
+    .scroll-hint {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      animation: up .9s ease forwards 1.3s;
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 40px;
+      background: linear-gradient(to bottom, var(--pink-dim), transparent);
+      animation: scrollpulse 2s ease-in-out infinite;
+    }
+
+    @keyframes scrollpulse {
+
+      0%,
+      100% {
+        opacity: .4
+      }
+
+      50% {
+        opacity: 1
+      }
+    }
+
+    @keyframes up {
+      from {
+        opacity: 0;
+        transform: translateY(28px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    section {
+      padding: clamp(70px, 11vw, 130px) clamp(24px, 8vw, 120px);
+      position: relative;
+    }
+
+    .sec-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(6px, .9vw, 8px);
+      color: var(--pink);
+      letter-spacing: 0.3em;
+      display: block;
+      margin-bottom: 14px;
+    }
+
+    .sec-title {
+      font-size: clamp(28px, 4.5vw, 54px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.05;
+      margin-bottom: 56px;
+    }
+
+    .sec-title em {
+      font-style: normal;
+      color: var(--pink);
+    }
+
+    .line {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--pink-dim), transparent);
+    }
+
+    #sobre {
+      background: linear-gradient(to bottom, transparent, #0b0b1688, transparent);
+    }
+
+    .sobre-grid {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: clamp(40px, 7vw, 100px);
+      align-items: center;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    @media(max-width:700px) {
+      .sobre-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .avatar {
+      width: clamp(160px, 22vw, 260px);
+      height: clamp(160px, 22vw, 260px);
+      background: var(--card);
+      border: 1px solid var(--border);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .avatar::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #ff6b9d14, transparent 55%);
+    }
+
+    .avatar-corner-tl,
+    .avatar-corner-br {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+    }
+
+    .avatar-corner-tl {
+      top: -1px;
+      left: -1px;
+      border-top: 1px solid var(--pink);
+      border-left: 1px solid var(--pink);
+    }
+
+    .avatar-corner-br {
+      bottom: -1px;
+      right: -1px;
+      border-bottom: 1px solid var(--pink);
+      border-right: 1px solid var(--pink);
+    }
+
+    .avatar-emoji {
+      font-size: 52px;
+      opacity: .25;
+    }
+
+    .sobre-bio h3 {
+      font-size: clamp(22px, 3.5vw, 38px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+
+    .sobre-bio h3 em {
+      font-style: normal;
+      color: var(--pink);
+    }
+
+    .bio-role {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(5px, .85vw, 8px);
+      color: var(--muted);
+      letter-spacing: 0.22em;
+      display: block;
+      margin-bottom: 28px;
+    }
+
+    .sobre-bio p {
+      font-size: clamp(13px, 1.5vw, 15px);
+      font-weight: 300;
+      color: var(--muted);
+      line-height: 2;
+      margin-bottom: 14px;
+      max-width: 520px;
+    }
+
+    .stats {
+      display: flex;
+      gap: 36px;
+      margin-top: 36px;
+      flex-wrap: wrap;
+    }
+
+    .stat-n {
+      font-size: clamp(28px, 3.5vw, 42px);
+      font-weight: 700;
+      color: var(--pink);
+      line-height: 1;
+      display: block;
+    }
+
+    .stat-l {
+      font-size: 11px;
+      font-weight: 300;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      display: block;
+      margin-top: 4px;
+    }
+
+    #destaque {
+      position: relative;
+      background: linear-gradient(to bottom, transparent, #0a0a1688, transparent);
+    }
+
+    .video-card {
+      max-width: 920px;
+      margin: 0 auto;
+      background: #08050f;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 0 0 1px var(--border), 0 32px 80px #00000088;
+    }
+
+    .video-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--pink) 40%, var(--pink-light) 60%, transparent);
+      z-index: 3;
+    }
+
+    .video-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, #ff6b9d0a 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .vwrap {
+      position: relative;
+      width: 100%;
+      padding-bottom: 56.25%;
+      background: #03000a;
+      overflow: hidden;
+    }
+
+    .vwrap video,
+    .vwrap iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      object-fit: cover;
+    }
+
+    .vwrap::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 55%, #03000acc 100%);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .vinfo {
+      padding: 20px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      border-top: 1px solid var(--border);
+      background: #07050e;
+    }
+
+    .vinfo-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .vinfo h3 {
+      font-size: clamp(14px, 2vw, 20px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .vinfo-meta {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 300;
+      letter-spacing: 0.06em;
+    }
+
+    .vtag {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 6px;
+      color: var(--pink);
+      border: 1px solid var(--pink-dim);
+      padding: 8px 14px;
+      letter-spacing: 0.12em;
+      background: #ff6b9d0a;
+    }
+
+    #album {
+      background: var(--bg);
+      position: relative;
+    }
+
+    #album::before {
+      content: '';
+      position: absolute;
+      top: -80px;
+      left: 0;
+      right: 0;
+      height: 80px;
+      background: linear-gradient(to bottom, transparent, var(--bg));
+      pointer-events: none;
+    }
+
+    .album-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(clamp(200px, 28vw, 300px), 1fr));
+      gap: 16px;
+    }
+
+    .acard {
+      background: #0c0916;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform .3s ease, border-color .3s ease, box-shadow .3s ease;
+      position: relative;
+    }
+
+    .acard:hover {
+      transform: translateY(-6px) scale(1.01);
+      border-color: #ff6b9d44;
+      box-shadow: 0 16px 48px #00000066, 0 0 0 1px #ff6b9d22;
+    }
+
+    .acard:hover .aoverlay {
+      opacity: 1;
+    }
+
+    .acard:hover .athumb-inner {
+      transform: scale(1.06);
+    }
+
+    .athumb {
+      width: 100%;
+      padding-bottom: 62%;
+      position: relative;
+      background: linear-gradient(135deg, #110820, #0a0014);
+      overflow: hidden;
+    }
+
+    .athumb-inner {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      opacity: 0.08;
+      transition: transform .4s ease;
+    }
+
+    .aoverlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, #09060fee 0%, #09060f88 40%, transparent 70%);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: flex-end;
+      padding: 16px;
+      opacity: 0;
+      transition: opacity .3s ease;
+      z-index: 3;
+    }
+
+    .aoverlay-play {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .aoverlay-play-btn {
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--pink);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--pink);
+      font-size: 12px;
+      box-shadow: 0 0 16px var(--pink-dim);
+    }
+
+    .aoverlay span {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 6px;
+      color: var(--pink-light);
+      letter-spacing: 0.12em;
+    }
+
+    .ainfo {
+      padding: 14px 16px 16px;
+      border-top: 1px solid var(--border);
+      background: #0a0713;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .ainfo-text {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .ainfo h4 {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+
+    .ainfo p {
+      font-size: 10px;
+      color: var(--muted);
+      font-weight: 300;
+      letter-spacing: 0.06em;
+    }
+
+    .ainfo-arrow {
+      color: var(--pink-dim);
+      font-size: 14px;
+      transition: color .3s, transform .3s;
+    }
+
+    .acard:hover .ainfo-arrow {
+      color: var(--pink);
+      transform: translateX(3px);
+    }
+
+    .preview-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity .4s ease;
+      z-index: 2;
+    }
+
+    .acard.previewing .preview-video {
+      opacity: 1;
+    }
+
+    .acard.previewing .athumb-inner {
+      opacity: 0;
+    }
+
+    .acard.previewing .aoverlay {
+      opacity: 0 !important;
+    }
+
+    .preview-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: rgba(255, 107, 157, 0.2);
+      z-index: 4;
+      opacity: 0;
+      transition: opacity .3s;
+    }
+
+    .acard.previewing .preview-bar {
+      opacity: 1;
+    }
+
+    .preview-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--pink);
+      box-shadow: 0 0 6px var(--pink);
+    }
+
+    .preview-label {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 6px;
+      color: var(--pink-light);
+      background: #07070dcc;
+      padding: 4px 8px;
+      letter-spacing: 0.1em;
+      z-index: 5;
+      opacity: 0;
+      transition: opacity .3s;
+    }
+
+    .acard.previewing .preview-label {
+      opacity: 1;
+    }
+
+    /* ── SERVIÇOS ── */
+#servicos {
+  background: linear-gradient(to bottom, transparent, #0b0b1688, transparent);
+}
+
+.srv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(clamp(180px, 26vw, 260px), 1fr));
+  gap: 20px;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.srv-card {
+  background: linear-gradient(135deg, #110820 0%, #0a0014 100%);
+  border: 1px solid rgba(255, 107, 157, 0.12);
+  padding: 36px 28px 32px;
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+  transition: border-color .4s, transform .4s, box-shadow .4s;
+}
+
+/* canto decorativo superior direito */
+.srv-card::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 60px; height: 60px;
+  background: linear-gradient(225deg, rgba(255,107,157,0.15) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* linha brilhante no fundo do card */
+.srv-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 10%; right: 10%;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--pink), transparent);
+  opacity: 0;
+  transition: opacity .4s;
+}
+
+.srv-card:hover {
+  border-color: rgba(255,107,157,0.35);
+  transform: translateY(-6px);
+  box-shadow:
+    0 20px 60px rgba(0,0,0,0.5),
+    0 0 0 1px rgba(255,107,157,0.1),
+    inset 0 0 40px rgba(255,107,157,0.03);
+}
+
+.srv-card:hover::after { opacity: 1; }
+
+/* número decorativo estilo anime no canto */
+.srv-card .srv-num {
+  position: absolute;
+  top: 16px; right: 20px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: rgba(255,107,157,0.18);
+  letter-spacing: 0.1em;
+}
+
+/* ícone com fundo pill */
+.srv-icon-wrap {
+  width: 52px; height: 52px;
+  background: rgba(255,107,157,0.08);
+  border: 1px solid rgba(255,107,157,0.15);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  transition: background .4s, border-color .4s;
+}
+
+.srv-card:hover .srv-icon-wrap {
+  background: rgba(255,107,157,0.14);
+  border-color: rgba(255,107,157,0.3);
+}
+
+.srv-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  opacity: 1;
+}
+
+.srv-card h3 {
+  font-size: clamp(15px, 1.8vw, 18px);
+  font-weight: 700;
+  margin-bottom: 10px;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+/* tag estilo anime embaixo do título */
+.srv-tag {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 5px;
+  color: var(--pink);
+  letter-spacing: 0.2em;
+  display: block;
+  margin-bottom: 16px;
+  opacity: 0.7;
+}
+
+.srv-card p {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.9;
+  font-weight: 300;
+}
+
+    #redes {
+      text-align: center;
+    }
+
+    .redes-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      max-width: 540px;
+      margin: 0 auto;
+    }
+
+    .rbtn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 26px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 300;
+      letter-spacing: 0.08em;
+      transition: border-color .3s, color .3s, transform .25s;
+    }
+
+    .rbtn:hover {
+      border-color: var(--pink-dim);
+      color: var(--pink-light);
+      transform: translateY(-2px);
+    }
+
+    footer {
+      padding: 28px clamp(24px, 7vw, 100px);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .f-logo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      color: var(--pink-dim);
+      letter-spacing: 0.12em;
+    }
+
+    footer p {
+      font-size: 11px;
+      color: #3a2638;
+      font-weight: 300;
+      letter-spacing: .06em;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity .9s ease, transform .9s ease;
+    }
+
+    .reveal.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    #modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: #000000dd;
+      z-index: 99998;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity .35s ease, visibility .35s ease;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    #modal-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-box {
+      position: relative;
+      width: 100%;
+      max-width: 900px;
+      background: #08050f;
+      border: 1px solid var(--border);
+      box-shadow: 0 0 0 1px #ff6b9d22, 0 40px 100px #000000cc;
+      transform: translateY(24px) scale(0.97);
+      transition: transform .35s ease;
+    }
+
+    #modal-overlay.open .modal-box {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--pink) 40%, var(--pink-light) 60%, transparent);
+      z-index: 2;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+    }
+
+    .modal-title {
+      font-size: clamp(12px, 2vw, 16px);
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .modal-meta {
+      font-size: 10px;
+      color: var(--muted);
+      font-weight: 300;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+
+    .modal-close {
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: border-color .2s, color .2s, background .2s;
+      line-height: 1;
+    }
+
+    .modal-close:hover {
+      border-color: var(--pink-dim);
+      color: var(--pink-light);
+      background: #ff6b9d11;
+    }
+
+    .modal-player {
+      position: relative;
+      width: 100%;
+      padding-bottom: 56.25%;
+      background: #03000a;
+    }
+
+    .modal-player video,
+    .modal-player iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      object-fit: contain;
+      background: #000;
+    }
+
+   @media(max-width:600px){
+  nav { display: none; }
+
+  #mobileNav {
+    display: flex !important;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 40px);
+    max-width: 340px;
+    height: 64px;
+    background: rgba(9, 5, 18, 0.75);
+    border: 1px solid rgba(255, 107, 157, 0.15);
+    border-radius: 32px;
+    z-index: 99999;
+    padding: 0 8px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow:
+      0 8px 32px rgba(0,0,0,0.6),
+      0 0 0 1px rgba(255,107,157,0.08),
+      inset 0 1px 0 rgba(255,107,157,0.12);
+  }
+
+  #mobileNav::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 20%; right: 20%;
+    height: 1px;
+    background: linear-gradient(to right, transparent, #ff6b9d, transparent);
+    border-radius: 50%;
+    opacity: 0.6;
+  }
+
+  #mobileNav button {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    color: rgba(255,255,255,0.25);
+    transition: color .3s ease;
+    height: 100%;
+    position: relative;
+    border-radius: 24px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  #mobileNav button.active {
+    color: var(--pink-light);
+    background: rgba(255, 107, 157, 0.12);
+  }
+
+  #mobileNav button.active::before {
+    content: '';
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 2px;
+    background: var(--pink);
+    border-radius: 1px;
+    box-shadow: 0 0 8px var(--pink);
+    opacity: 0.8;
+  }
+
+  #mobileNav button svg {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: filter .3s;
+  }
+
+  #mobileNav button.active svg {
+    filter: drop-shadow(0 0 4px rgba(255,107,157,0.8));
+  }
+
+  .mnav-label {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 4.5px;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    display: block;
+    color: inherit;
+  }
+
+  #site { padding-bottom: 96px; }
+
+  /* ── MODAL MOBILE ── */
+  #modal-overlay {
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    background: #000000ee;
+  }
+
+  .modal-box {
+    max-width: 100%;
+    width: 100%;
+    border-radius: 0;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    max-height: 100dvh;
+  }
+
+  .modal-header {
+    flex-shrink: 0;
+    padding: 12px 16px;
+  }
+
+  .modal-player {
+    padding-bottom: 0;
+    flex: 1;
+    min-height: 0;
+    position: relative;
+  }
+
+  .modal-player video {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    max-height: calc(100dvh - 60px);
+    object-fit: contain;
+    background: #000;
+  }
+}
+  </style>
+</head>
+
+<body>
+  <canvas id="petals"></canvas>
+  <div id="bg-video-wrap">
+    <video id="bg-video" autoplay muted loop playsinline>
+      <source src="./src/video/Edit-Destaque.mp4" type="video/mp4">
+    </video>
+  </div>
+  <div id="loader">
+    <div class="lc">
+      <svg class="torii" viewBox="0 0 64 56" xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated">
+        <rect x="0" y="6" width="64" height="6" fill="#cc3366" />
+        <rect x="4" y="2" width="56" height="4" fill="#ff6699" />
+        <rect x="0" y="8" width="64" height="2" fill="#ff99bb" />
+        <rect x="0" y="12" width="6" height="2" fill="#ff6699" />
+        <rect x="58" y="12" width="6" height="2" fill="#ff6699" />
+        <rect x="4" y="14" width="6" height="38" fill="#cc3366" />
+        <rect x="54" y="14" width="6" height="38" fill="#cc3366" />
+        <rect x="10" y="14" width="2" height="30" fill="#ff6699" />
+        <rect x="52" y="14" width="2" height="30" fill="#ff6699" />
+        <rect x="4" y="50" width="8" height="6" fill="#881133" />
+        <rect x="52" y="50" width="8" height="6" fill="#881133" />
+        <rect x="8" y="12" width="48" height="2" fill="#ff99bb" opacity="0.4" />
+      </svg>
+      <div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;">
+        <div class="l-name">WLN Studio</div>
+        <div class="l-sub">CARREGANDO...</div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-lbl">LOADING</div>
+        <div class="bar-track">
+          <div class="bar-fill" id="barFill"></div>
+        </div>
+        <div class="bar-pct" id="barPct">0%</div>
+      </div>
+      <div class="dots">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </div>
+  </div>
+  <div id="site">
+    <nav>
+      <a href="#hero" class="nav-logo">WLN Studio</a>
+      <ul class="nav-links">
+        <li><a href="#sobre">Sobre</a></li>
+        <li><a href="#destaque">Edits</a></li>
+        <li><a href="#album">Album</a></li>
+        <li><a href="#servicos">Servicos</a></li>
+        <li><a href="#redes">Redes</a></li>
+      </ul>
+    </nav>
+    <section id="hero">
+      <p class="hero-eyebrow">AMV - ANIME - EDITOR</p>
+      <h1 class="hero-title">Arte que<br><em>move</em></h1>
+      <p class="hero-desc">Edits criadas com intencao. Cada corte, cada frame - uma historia.</p>
+      <div class="hero-actions">
+        <a href="#destaque" class="btn-p">Ver edits</a>
+        <a href="#album" class="btn-o">Album completo</a>
+      </div>
+      <div class="scroll-hint">
+        <div class="scroll-line"></div>
+      </div>
+    </section>
+    <div class="line"></div>
+    <section id="sobre">
+      <div class="sobre-grid">
+        <div class="avatar reveal">
+          <div class="avatar-corner-tl"></div>
+          <div class="avatar-corner-br"></div>
+            <img src="./src/img/Foto_Portifolio_WLN.jpeg" 
+       alt="Foto de perfil"
+       style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius: 20px;">
+        </div>
+        <div class="sobre-bio reveal">
+          <h3>Sobre <em>WLN</em></h3>
+          <span class="bio-role">AMV EDITOR - CRIADOR DE CONTEUDO</span>
+          <p>Olá, me chamo WLN. Trabalho com edição de vídeos e manipulação de imagens desde 2022, construindo um estilo próprio dentro do universo de AMVs e conteúdo anime.</p>
+<p>Utilizo CapCut e Alight Motion como ferramentas principais — provando que equipamento não define talento. Todo o meu trabalho é feito pelo celular, com precisão e criatividade.</p>
+          <div class="stats">
+            <div><span class="stat-n">100+</span><span class="stat-l">Edits criadas</span></div>
+            <div><span class="stat-n">450K+</span><span class="stat-l">Visualizaçoes</span></div>
+            <div><span class="stat-n">04</span><span class="stat-l">Anos editando</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <div class="line"></div>
+    <section id="destaque">
+      <span class="sec-label reveal">// DESTAQUE</span>
+      <h2 class="sec-title reveal">Edit <em>recente</em></h2>
+      <div class="video-card reveal">
+        <div class="vwrap">
+          <video src="./src/video/edit-06.mp4" controls controlsList="nodownload"
+            style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;"></video>
+        </div>
+        <div class="vinfo">
+          <div class="vinfo-left">
+            <h3>Sábado - collab and onnix</h3>
+            <span class="vinfo-meta">AMV - 2024 - WLN Studio</span>
+          </div>
+          <span class="vtag">DESTAQUE</span>
+        </div>
+      </div>
+    </section>
+    <div class="line"></div>
+    <section id="album">
+      <span class="sec-label reveal">// ALBUM</span>
+      <h2 class="sec-title reveal">Algumas das minhas <em>edits</em></h2>
+      <div class="album-grid">
+
+        <div class="acard reveal" data-preview="./src/video/edit-01.mp4">
+          <div class="athumb">
+            <div class="athumb-inner">&#127800;</div>
+            <video class="preview-video" src="./src/video/edit-01.mp4" muted playsinline preload="none"></video>
+            <div class="preview-bar">
+              <div class="preview-bar-fill"></div>
+            </div>
+            <div class="preview-label">PREVIEW</div>
+            <div class="aoverlay">
+              <div class="aoverlay-play">
+                <div class="aoverlay-play-btn">&#9654;</div><span>ASSISTIR</span>
+              </div>
+            </div>
+          </div>
+          <div class="ainfo">
+            <div class="ainfo-text">
+              <h4>Frieren edit</h4>
+              <p>AMV - 2024</p>
+            </div><span class="ainfo-arrow">&#8594;</span>
+          </div>
+        </div>
+
+        <div class="acard reveal" data-preview="./src/video/edit-02.mp4">
+          <div class="athumb">
+            <div class="athumb-inner">&#127800;</div>
+            <video class="preview-video" src="./src/video/edit-02.mp4" muted playsinline preload="none"></video>
+            <div class="preview-bar">
+              <div class="preview-bar-fill"></div>
+            </div>
+            <div class="preview-label">PREVIEW</div>
+            <div class="aoverlay">
+              <div class="aoverlay-play">
+                <div class="aoverlay-play-btn">&#9654;</div><span>ASSISTIR</span>
+              </div>
+            </div>
+          </div>
+          <div class="ainfo">
+            <div class="ainfo-text">
+              <h4>Voz do silêncio - Eu não gosto de você</h4>
+              <p>AMV - 2024</p>
+            </div><span class="ainfo-arrow">&#8594;</span>
+          </div>
+        </div>
+
+        <div class="acard reveal" data-preview="./src/video/edit-03.mp4">
+          <div class="athumb">
+            <div class="athumb-inner">&#127800;</div>
+            <video class="preview-video" src="./src/video/edit-03.mp4" muted playsinline preload="none"></video>
+            <div class="preview-bar">
+              <div class="preview-bar-fill"></div>
+            </div>
+            <div class="preview-label">PREVIEW</div>
+            <div class="aoverlay">
+              <div class="aoverlay-play">
+                <div class="aoverlay-play-btn">&#9654;</div><span>ASSISTIR</span>
+              </div>
+            </div>
+          </div>
+          <div class="ainfo">
+            <div class="ainfo-text">
+              <h4>Itachi - O vilão depende de qual lado você esta da historia</h4>
+              <p>AMV - 2023</p>
+            </div><span class="ainfo-arrow">&#8594;</span>
+          </div>
+        </div>
+
+        <div class="acard reveal" data-preview="./src/video/edit-04.mp4">
+          <div class="athumb">
+            <div class="athumb-inner">&#127800;</div>
+            <video class="preview-video" src="./src/video/edit-04.mp4" muted playsinline preload="none"></video>
+            <div class="preview-bar">
+              <div class="preview-bar-fill"></div>
+            </div>
+            <div class="preview-label">PREVIEW</div>
+            <div class="aoverlay">
+              <div class="aoverlay-play">
+                <div class="aoverlay-play-btn">&#9654;</div><span>ASSISTIR</span>
+              </div>
+            </div>
+          </div>
+          <div class="ainfo">
+            <div class="ainfo-text">
+              <h4>Amor eu fui tão fundo</h4>
+              <p>AMV - 2023</p>
+            </div><span class="ainfo-arrow">&#8594;</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+    <div class="line"></div>
+    <section id="servicos">
+  <span class="sec-label reveal" style="text-align:center;display:block;">// SERVICOS</span>
+  <h2 class="sec-title reveal" style="text-align:center;">O que eu <em>faço</em></h2>
+  <div class="srv-grid">
+
+    <div class="srv-card reveal">
+      <span class="srv-num">01</span>
+      <div class="srv-icon-wrap">
+        <span class="srv-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff6b9d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 12l-4-2.5v5L16 12z" fill="#ff6b9d" stroke="none"/><path d="M2 9h20M2 15h20"/></svg></span>
+      </div>
+      <h3>AMV / Edit</h3>
+      <span class="srv-tag">✦ PRINCIPAL</span>
+      <p>Edições sincronizadas ao ritmo da música — cada corte pensado, cada frame sentido. Do conceito ao produto final, tudo com identidade.</p>
+    </div>
+
+    <div class="srv-card reveal">
+      <span class="srv-num">02</span>
+      <div class="srv-icon-wrap">
+        <span class="srv-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff6b9d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8.12 8.12L19 19M8.12 15.88L19 5"/></svg></span>
+      </div>
+      <h3>Edição de Vídeo</h3>
+      <span class="srv-tag">✦ CAPCUT & ALIGHT MOTION</span>
+      <p>Montagem, transições e efeitos visuais feitos inteiramente pelo celular — provando que criatividade não depende de equipamento.</p>
+    </div>
+
+    <div class="srv-card reveal">
+      <span class="srv-num">03</span>
+      <div class="srv-icon-wrap">
+        <span class="srv-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff6b9d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c1.1 0 2-.9 2-2 0-.53-.19-1.01-.5-1.38a.52.52 0 01.42-.82H16c3.31 0 6-2.69 6-6 0-4.42-4.03-8-9-8z"/><circle cx="6.5" cy="11.5" r="1.5" fill="#ff6b9d" stroke="none"/><circle cx="9.5" cy="7.5" r="1.5" fill="#ff6b9d" stroke="none"/><circle cx="14.5" cy="7.5" r="1.5" fill="#ff6b9d" stroke="none"/><circle cx="17.5" cy="11.5" r="1.5" fill="#ff6b9d" stroke="none"/></svg></span>
+      </div>
+      <h3>Manipulação de Imagem</h3>
+      <span class="srv-tag">✦ DESDE 2022</span>
+      <p>Criação de thumbnails, capas e artes visuais com estética anime — cada peça construída para causar impacto à primeira vista.</p>
+    </div>
+
+  </div>
+</section>
+    <div class="line"></div>
+    <section id="redes" style="text-align:center;">
+      <span class="sec-label reveal" style="display:block;">// REDES SOCIAIS</span>
+      <h2 class="sec-title reveal">Me <em>encontre</em></h2>
+      <div class="redes-row reveal">
+        <a href="https://youtube.com/@wln077?si=F8l5VsO3OO1sd0bv" class="rbtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="#ff6b9d">
+            <path
+              d="M23 7s-.3-1.9-1.2-2.7c-1.1-1.2-2.4-1.2-3-1.3C16.2 3 12 3 12 3s-4.2 0-6.8.1c-.6.1-1.9.1-3 1.3C1.3 5.2 1 7 1 7S.7 9.1.7 11.2v1.9c0 2.1.3 4.2.3 4.2s.3 1.9 1.2 2.7c1.1 1.2 2.6 1.1 3.3 1.2C7.2 21.4 12 21.4 12 21.4s4.2 0 6.8-.2c.6-.1 1.9-.1 3-1.3.9-.8 1.2-2.7 1.2-2.7s.3-2.1.3-4.2v-1.9C23.3 9.1 23 7 23 7zM9.7 15.5V8.4l8.1 3.6-8.1 3.5z" />
+          </svg> YouTube</a>
+        <a href="https://www.instagram.com/trt.wln?igsh=ZmVweGVidm41NmJ3" class="rbtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff6b9d"
+            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="2" width="20" height="20" rx="5" />
+            <circle cx="12" cy="12" r="5" />
+            <circle cx="17.5" cy="6.5" r="1" fill="#ff6b9d" stroke="none" />
+          </svg> Instagram</a>
+        <a href="https://www.tiktok.com/@trt.wln?_r=1&_t=ZS-94ixSRoyCpT" class="rbtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="#ff6b9d">
+            <path
+              d="M19.6 3.4A4.8 4.8 0 0115.5 1h-3.2v14.9a2.8 2.8 0 11-2.8-2.8c.3 0 .5 0 .8.1V9.8a6.3 6.3 0 00-.8-.1 6.3 6.3 0 000 12.6 6.3 6.3 0 006.3-6.3V8.6A8.3 8.3 0 0019.6 10V6.8a4.8 4.8 0 01-3.1-1.3 4.9 4.9 0 003.1-2.1z" />
+          </svg> TikTok</a>
+        
+      </div>
+    </section>
+    <footer>
+      <span class="f-logo">WLN Studio</span>
+      <p>&copy; 2026 - Todos os direitos reservados</p>
+    </footer>
+  </div>
+
+  <nav id="mobileNav">
+    <button onclick="document.getElementById('hero').scrollIntoView({behavior:'smooth'})" data-section="hero"
+      class="active">
+      <svg viewBox="0 0 24 24">
+        <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z" />
+        <path d="M9 21V12h6v9" />
+      </svg>
+      <span class="mnav-label">Inicio</span>
+    </button>
+    <button onclick="document.getElementById('destaque').scrollIntoView({behavior:'smooth'})" data-section="destaque">
+      <svg viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" />
+        <polygon points="10,8 16,12 10,16" fill="currentColor" stroke="none" />
+      </svg>
+      <span class="mnav-label">Edits</span>
+    </button>
+    <button onclick="document.getElementById('album').scrollIntoView({behavior:'smooth'})" data-section="album">
+      <svg viewBox="0 0 24 24">
+        <rect x="3" y="3" width="7" height="7" rx="1" />
+        <rect x="14" y="3" width="7" height="7" rx="1" />
+        <rect x="3" y="14" width="7" height="7" rx="1" />
+        <rect x="14" y="14" width="7" height="7" rx="1" />
+      </svg>
+      <span class="mnav-label">Album</span>
+    </button>
+  </nav>
+
+  <div id="modal-overlay">
+    <div class="modal-box" id="modalBox">
+      <div class="modal-header">
+        <div style="display:flex;flex-direction:column;gap:3px;overflow:hidden;">
+          <span class="modal-title" id="modalTitle">-</span>
+          <span class="modal-meta" id="modalMeta">AMV - WLN Studio</span>
+        </div>
+        <button class="modal-close" id="modalClose" title="Fechar">X</button>
+      </div>
+      <div class="modal-player">
+        <video id="modalVideo" controls controlsList="nodownload" playsinline></video>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const cv = document.getElementById('petals'), ctx = cv.getContext('2d');
+    function rsz() { cv.width = innerWidth; cv.height = innerHeight; } rsz(); window.addEventListener('resize', rsz);
+    const P = 4;
+    const PETAL_A = [[1, 0], [2, 0], [0, 1], [1, 1], [2, 1], [3, 1], [0, 2], [1, 2], [2, 2], [3, 2], [1, 3], [2, 3], [1, 4]];
+    const PETAL_B = [[1, 0], [0, 1], [1, 1], [2, 1], [0, 2], [1, 2], [2, 2], [1, 3], [2, 3], [1, 4], [1, 5]];
+    const PETAL_C = [[1, 0], [2, 0], [0, 1], [1, 1], [2, 1], [3, 1], [1, 2], [2, 2]];
+    const FLOWER = [[3, 0], [4, 0], [3, 1], [4, 1], [6, 2], [7, 2], [6, 3], [7, 3], [5, 6], [6, 6], [5, 7], [6, 7], [1, 6], [2, 6], [1, 7], [2, 7], [0, 2], [1, 2], [0, 3], [1, 3], [3, 3], [4, 3], [2, 4], [3, 4], [4, 4], [5, 4], [3, 5], [4, 5]];
+    const FLOWER_SM = [[1, 0], [2, 0], [0, 1], [1, 1], [2, 1], [3, 1], [0, 2], [1, 2], [2, 2], [3, 2], [1, 3], [2, 3]];
+    const SHAPES = [{ pts: PETAL_A, sz: P, type: 'petal' }, { pts: PETAL_A, sz: P + 1, type: 'petal' }, { pts: PETAL_B, sz: P, type: 'petal' }, { pts: PETAL_C, sz: P, type: 'petal' }, { pts: PETAL_C, sz: P + 2, type: 'petal' }, { pts: FLOWER, sz: P - 1, type: 'flower' }, { pts: FLOWER, sz: P, type: 'flower' }, { pts: FLOWER_SM, sz: P, type: 'flower' }];
+    const PC = ['#ff6b9d', '#ff85b0', '#ff9ec8', '#ffb8d8', '#e8457a', '#ff5090'];
+    const FC = ['#ff6b9d', '#e8457a', '#ff85b0', '#cc2d66'];
+    const CC = '#ffe0ef';
+    function mkP(t = true) { const s = SHAPES[Math.floor(Math.random() * SHAPES.length)]; return { x: Math.random() * cv.width * 1.15, y: t ? -30 : Math.random() * cv.height, vx: -0.5 - Math.random() * 1.0, vy: 0.4 + Math.random() * 0.7, sw: Math.random() * Math.PI * 2, ss: 0.013 + Math.random() * 0.013, sa: 1.2 + Math.random() * 1.5, rot: Math.floor(Math.random() * 4), shape: s, col: s.type === 'flower' ? FC[Math.floor(Math.random() * FC.length)] : PC[Math.floor(Math.random() * PC.length)], alpha: 0.18 + Math.random() * 0.20 }; }
+    function rP(px, py, r) { for (let i = 0; i < r; i++) { const t = px; px = -py; py = t; } return [px, py]; }
+    function dP(p) { ctx.globalAlpha = p.alpha; const { pts, sz } = p.shape; for (const [px, py] of pts) { const [rx, ry] = rP(px, py, p.rot); ctx.fillStyle = p.col; ctx.fillRect(Math.round(p.x + rx * sz), Math.round(p.y + ry * sz), sz, sz); } if (p.shape.type === 'flower') { ctx.fillStyle = CC; ctx.globalAlpha = p.alpha * 0.9; const cx = (p.shape === SHAPES[5] || p.shape === SHAPES[6]) ? 3 : 1, cy = (p.shape === SHAPES[5] || p.shape === SHAPES[6]) ? 4 : 1; const [rx, ry] = rP(cx, cy, p.rot); ctx.fillRect(Math.round(p.x + rx * p.shape.sz), Math.round(p.y + ry * p.shape.sz), p.shape.sz * 2, p.shape.sz * 2); } ctx.globalAlpha = 1; }
+    let parts = Array.from({ length: 20 }, () => mkP(false));
+    (function loop() { ctx.clearRect(0, 0, cv.width, cv.height); parts.forEach((p, i) => { p.sw += p.ss; p.x += p.vx + Math.sin(p.sw) * p.sa * 0.12; p.y += p.vy; dP(p); if (p.y > cv.height + 40 || p.x < -60) parts[i] = mkP(true); }); if (Math.random() < 0.04 && parts.length < 28) parts.push(mkP(true)); requestAnimationFrame(loop); })();
+
+    let prog = 0;
+    const fill = document.getElementById('barFill'), pct = document.getElementById('barPct');
+    const iv = setInterval(() => { prog = Math.min(prog + Math.random() * 4 + 1, 100); fill.style.width = prog + '%'; pct.textContent = Math.floor(prog) + '%'; if (prog >= 100) { clearInterval(iv); setTimeout(() => { document.getElementById('loader').classList.add('fade-out'); document.getElementById('site').classList.add('visible'); if (window.innerWidth <= 600) { const mn = document.getElementById('mobileNav'); mn.style.visibility = 'visible'; } }, 600); } }, 80);
+
+    (function () { const wrap = document.getElementById('bg-video-wrap'), album = document.getElementById('album'); function onS() { const heroH = document.getElementById('hero').offsetHeight, scrollY = window.scrollY, progress = Math.min(scrollY / (heroH * 0.6), 1), opacity = Math.max(1 - (progress * 0.6), 0.4); wrap.style.opacity = opacity; const aT = album ? album.getBoundingClientRect().top : 9999; wrap.style.visibility = aT <= 0 ? 'hidden' : 'visible'; } window.addEventListener('scroll', onS, { passive: true }); onS(); })();
+
+    const mBtns = document.querySelectorAll('#mobileNav button'), mSec = ['hero', 'destaque', 'album'];
+    function upA() { let c = 'hero'; mSec.forEach(id => { const el = document.getElementById(id); if (el && window.scrollY >= el.offsetTop - window.innerHeight / 2) c = id; }); mBtns.forEach(b => b.classList.toggle('active', b.dataset.section === c)); }
+    window.addEventListener('scroll', upA, { passive: true }); upA();
+
+    const obs = new IntersectionObserver(entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('show'); }), { threshold: .1 });
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+    const PREVIEW_MS = 5000, pTimers = new Map();
+    function startPreview(card) { if (card.classList.contains('previewing')) return; const v = card.querySelector('.preview-video'), b = card.querySelector('.preview-bar-fill'); if (!v) return; v.currentTime = 0; v.play().catch(() => { }); card.classList.add('previewing'); b.style.transition = 'none'; b.style.width = '0%'; requestAnimationFrame(() => { b.style.transition = 'width ' + PREVIEW_MS + 'ms linear'; b.style.width = '100%'; }); pTimers.set(card, setTimeout(() => stopPreview(card), PREVIEW_MS)); }
+    function stopPreview(card) { const v = card.querySelector('.preview-video'), b = card.querySelector('.preview-bar-fill'); if (!v) return; clearTimeout(pTimers.get(card)); pTimers.delete(card); v.pause(); v.currentTime = 0; card.classList.remove('previewing'); if (b) { b.style.transition = 'none'; b.style.width = '0%'; } }
+
+    /* FIX: threshold 0.25 + delay fixo 300ms */
+    const pObs = new IntersectionObserver((entries) => { entries.forEach(e => { const card = e.target; if (e.isIntersecting) { setTimeout(() => startPreview(card), 300); } else { stopPreview(card); } }); }, { threshold: 0.25 });
+    document.querySelectorAll('.acard[data-preview]').forEach(card => pObs.observe(card));
+
+    const mO = document.getElementById('modal-overlay'), mV = document.getElementById('modalVideo'), mT = document.getElementById('modalTitle'), mM = document.getElementById('modalMeta'), mC = document.getElementById('modalClose');
+    function openModal(src, title, meta) {
+      mV.src = src;
+      mT.textContent = title || 'Edit';
+      mM.textContent = meta || 'AMV - WLN Studio';
+      mO.classList.add('open');
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+      setTimeout(() => mV.play().catch(() => { }), 350);
+    }
+
+    function closeModal() {
+      mV.pause();
+      mV.src = '';
+      mO.classList.remove('open');
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    }
+    mC.addEventListener('click', closeModal);
+    mO.addEventListener('click', e => { if (e.target === mO) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+    document.querySelectorAll('.acard[data-preview]').forEach(card => { card.addEventListener('click', () => { const src = card.dataset.preview, title = card.querySelector('.ainfo h4')?.textContent || 'Edit', meta = card.querySelector('.ainfo p')?.textContent || 'AMV'; stopPreview(card); openModal(src, title, meta); }); });
+ /* ════ MOBILE NAV — aparece só no scroll ════ */
+(function(){
+  const nav = document.getElementById('mobileNav');
+  let lastY = 0;
+  let hidden = true;
+
+  // começa escondida
+  nav.style.transition = 'opacity .4s ease, transform .4s ease';
+  nav.style.opacity = '0';
+  nav.style.transform = 'translateX(-50%) translateY(20px)';
+
+  window.addEventListener('scroll', function(){
+    const currentY = window.scrollY;
+
+    if(currentY < 80){
+      // no topo — esconde
+      nav.style.opacity = '0';
+      nav.style.transform = 'translateX(-50%) translateY(20px)';
+      hidden = true;
+    } else {
+      // qualquer scroll abaixo de 80px — aparece
+      nav.style.opacity = '1';
+      nav.style.transform = 'translateX(-50%) translateY(0)';
+      hidden = false;
+    }
+
+    lastY = currentY;
+  }, { passive: true });
+})();
+ </script>
+</body>
+
+</html>
